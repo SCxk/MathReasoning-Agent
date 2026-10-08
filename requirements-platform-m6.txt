@@ -1,0 +1,12 @@
+-r requirements-platform-m4.txt
+SQLAlchemy==2.0.43
+psycopg[binary]==3.2.10
+celery==5.5.3
+prometheus-client==0.23.1
+qdrant-client==1.15.1
+pypdf==6.1.1
+python-multipart==0.0.20
+markdown-it-py==2.2.0
+rank-bm25==0.2.2
+PyYAML==6.0.3
+requests==2.32.5

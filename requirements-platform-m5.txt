@@ -1,0 +1,9 @@
+-r requirements-platform-m4.txt
+qdrant-client==1.15.1
+pypdf==6.1.1
+python-multipart==0.0.20
+markdown-it-py==2.2.0
+rank-bm25==0.2.2
+# Local, offline-only Qwen embedding adapter. No weights are downloaded by the app.
+sentence-transformers==5.1.1
+transformers==4.57.6

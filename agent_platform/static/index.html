@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>MathReasoning-Agent</title>
+  <style>
+    :root { color-scheme: light; font-family: "Segoe UI", "Microsoft YaHei", sans-serif; color: #202522; background: #f5f7f6; }
+    * { box-sizing: border-box; letter-spacing: 0; }
+    body { margin: 0; }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; border: 1px solid #c6cfca; background: white; color: #202522; padding: 9px 14px; border-radius: 4px; min-height: 40px; }
+    button:hover { background: #edf2ef; }
+    button:disabled { opacity: .5; cursor: default; }
+    button.primary { background: #186947; color: white; border-color: #186947; }
+    button.primary:hover { background: #125237; }
+    button.danger { color: #a13d39; }
+    a { color: #186947; }
+    :focus-visible { outline: 2px solid #186947; outline-offset: 3px; }
+    header { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 20px 28px; border-bottom: 1px solid #dce2de; background: white; }
+    h1 { font-size: 24px; margin: 0; font-weight: 650; }
+    header p { margin: 6px 0 0; color: #67736c; font-size: 12px; }
+    .layout { max-width: 1440px; margin: auto; display: grid; grid-template-columns: 270px minmax(0, 1fr); min-height: calc(100vh - 90px); }
+    aside { padding: 22px 18px; border-right: 1px solid #dce2de; }
+    main { min-width: 0; padding: 26px 30px 40px; }
+    h2 { font-size: 17px; margin: 0 0 16px; font-weight: 600; }
+    h3 { font-size: 14px; margin: 24px 0 10px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+    textarea, input { border: 1px solid #c6cfca; border-radius: 4px; padding: 10px 12px; width: 100%; background: white; color: #202522; }
+    textarea { min-height: 150px; resize: vertical; line-height: 1.6; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .muted { font-size: 12px; color: #67736c; }
+    .identifier { font-family: Consolas, monospace; word-break: break-all; font-size: 12px; color: #67736c; }
+    #session-id { margin: 14px 0 20px; }
+    #session-list, #task-list { display: grid; gap: 6px; }
+    .list-item { text-align: left; padding: 10px; width: 100%; overflow-wrap: anywhere; }
+    .list-item.selected { border-color: #186947; border-left-width: 3px; background: #e8f1eb; }
+    .list-item small { display: block; margin-top: 5px; color: #67736c; }
+    .band { margin-top: 24px; padding-top: 24px; border-top: 1px solid #dce2de; }
+    #error { color: #9d302b; background: #fce9e7; padding: 12px; margin-top: 14px; border-left: 3px solid #c75950; overflow-wrap: anywhere; }
+    [hidden] { display: none !important; }
+    #status { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: #186947; }
+    #status::before { content: ""; width: 7px; height: 7px; background: currentColor; border-radius: 50%; }
+    .meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin: 18px 0; }
+    .meta dt { font-size: 12px; color: #67736c; margin-bottom: 6px; }
+    .meta dd { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+    #answer { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 14px; line-height: 1.7; background: white; padding: 16px; border-left: 3px solid #186947; margin: 12px 0 0; }
+    .tabs { display: flex; gap: 22px; border-bottom: 1px solid #dce2de; }
+    .tab { background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; padding: 10px 0; font-size: 14px; }
+    .tab[aria-selected="true"] { border-bottom-color: #186947; color: #186947; }
+    #event-list { list-style: none; margin: 0; padding: 0; }
+    #event-list li { display: grid; grid-template-columns: 64px 100px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid #e2e7e3; font-size: 13px; align-items: start; }
+    #event-list code { font-size: 12px; overflow-wrap: anywhere; }
+    #event-list time { color: #67736c; font-size: 12px; }
+    #event-list pre { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; color: #67736c; }
+    #raw-trace { font: 12px/1.6 Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 500px; overflow: auto; }
+    details { margin-top: 22px; font-size: 13px; }
+    details input { margin: 10px 0; }
+    #event-list details { margin-top: 6px; color: #67736c; }
+    footer { margin-top: 24px; font-size: 12px; color: #67736c; }
+    .document-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0; }
+    #document-list { padding: 0; list-style: none; font-size: 13px; }
+    #document-list li { padding: 10px 0; border-bottom: 1px solid #e2e7e3; overflow-wrap: anywhere; }
+    @media (max-width: 760px) {
+      header { padding: 16px; align-items: flex-start; }
+      header a { white-space: nowrap; font-size: 13px; }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      aside { border-right: 0; border-bottom: 1px solid #dce2de; padding: 16px; }
+      main { padding: 22px 16px 32px; }
+      #session-list, #task-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      #session-id { margin: 12px 0; }
+      #event-list li { grid-template-columns: 52px 65px minmax(0, 1fr); gap: 8px; }
+      .meta { gap: 10px; }
+      h1 { font-size: 22px; }
+      .document-fields { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>MathReasoning-Agent</h1><p id="runtime-label">Connecting</p></div>
+    <a href="/docs" target="_blank" rel="noopener">API</a>
+  </header>
+  <div class="layout">
+    <aside>
+      <div class="row"><h2 style="margin:0">会话</h2><button id="new-session">新建会话</button></div>
+      <div id="session-id" class="identifier">—</div>
+      <div id="session-list"></div>
+      <h3>任务</h3>
+      <div id="task-list"></div>
+      <details>
+        <summary>打开已有任务</summary>
+        <label for="attach-session" style="margin-top:12px">会话 ID</label><input id="attach-session" autocomplete="off">
+        <label for="attach-task">任务 ID</label><input id="attach-task" autocomplete="off">
+        <button id="attach">打开</button>
+      </details>
+    </aside>
+    <main>
+      <form id="problem-form">
+        <label for="problem">数学问题</label>
+        <textarea id="problem" maxlength="24000" required></textarea>
+        <div class="row" style="margin-top:12px"><span class="muted" id="char-count">0 / 24,000</span><button type="submit" class="primary" id="submit">创建任务</button></div>
+      </form>
+      <div role="alert" id="error" hidden></div>
+      <section class="band" id="document-section" hidden>
+        <h2>参考文档</h2>
+        <form id="document-form">
+          <label for="document-file">PDF / Markdown</label>
+          <input type="file" id="document-file" accept=".pdf,.md,.markdown" required>
+          <div class="document-fields">
+            <div><label for="document-domain">领域</label><input id="document-domain" maxlength="100"></div>
+            <div><label for="document-type">题型</label><input id="document-type" maxlength="100"></div>
+            <div><label for="document-source">来源</label><input id="document-source" maxlength="200"></div>
+          </div>
+          <button type="submit" id="document-upload">上传文档</button>
+        </form>
+        <ul id="document-list" aria-live="polite"></ul>
+      </section>
+      <section class="band" id="task-section" hidden>
+        <div class="row"><h2 style="margin:0">执行记录</h2><div class="row"><span id="status">—</span><button id="resume" hidden>恢复任务</button><button id="cancel" class="danger">取消任务</button></div></div>
+        <p class="identifier" id="task-id"></p>
+        <dl class="meta"><div><dt>当前阶段</dt><dd id="stage">—</dd></div><div><dt>事件</dt><dd id="event-count">0</dd></div><div><dt>连接</dt><dd id="connection">—</dd></div></dl>
+        <pre id="answer" hidden></pre>
+        <div class="band"><div class="tabs" role="tablist"><button class="tab" id="events-tab" role="tab" aria-selected="true">事件</button><button class="tab" id="json-tab" role="tab" aria-selected="false">Trace JSON</button></div><ol id="event-list"></ol><pre id="raw-trace" hidden></pre></div>
+      </section>
+      <footer id="storage-status">—</footer>
+    </main>
+  </div>
+  <script>
+    const $ = id => document.getElementById(id);
+    const terminal = new Set(['succeeded', 'cancelled', 'failed', 'interrupted']);
+    const names = ['task.accepted','task.running','task.cancelling','task.cancelled','task.interrupted','task.resumed','task.succeeded','task.failed','stage.started','stage.completed','stage.recovered_error','model.started','model.completed','model.failed','model.interrupted','model.budget_exhausted','retrieval.started','retrieval.completed','retrieval.interrupted','tool.started','tool.completed','tool.failed','tool.interrupted','tool.committed','tool.replayed','tool.rejected','tool_fallback.started','tool_fallback.completed','tool_fallback.interrupted','candidate_check.failed','reasoning.event','verification.completed','checkpoint.incompatible'];
+    const labels = {queued:'排队中',running:'运行中',cancelling:'正在取消',cancelled:'已取消',succeeded:'已完成',failed:'失败',interrupted:'已中断'};
+    const sessions = new Map();
+    const documents = new Map();
+    names.push('retrieval.cited');
+    let sessionId = null, selectedTask = null, source = null, events = [], selection = 0;
+    function showError(error) { $('error').textContent = error.message; $('error').hidden = false; }
+    async function api(path, options = {}) {
+      const response = await fetch(path, { ...options, headers: {...(options.body instanceof FormData ? {} : {'Content-Type':'application/json'}), ...(options.headers || {})} });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error?.code || `HTTP ${response.status}`);
+      return body;
+    }
+    function taskPath(task = selectedTask) { return `/v1/sessions/${encodeURIComponent(task.session_id)}/tasks/${encodeURIComponent(task.id)}`; }
+    function renderLists() {
+      $('session-id').textContent = sessionId || '—';
+      $('session-list').replaceChildren(); $('task-list').replaceChildren();
+      for (const [id, tasks] of sessions) {
+        const button = document.createElement('button'); button.className = `list-item${id === sessionId ? ' selected' : ''}`;
+        button.textContent = `会话 ${id.slice(0,8)}`; button.onclick = () => selectSession(id); $('session-list').append(button);
+        if (id === sessionId) for (const task of tasks.values()) {
+          const item = document.createElement('button'); item.className = `list-item${task.id === selectedTask?.id ? ' selected' : ''}`;
+          item.textContent = task.id.slice(0,8); const status = document.createElement('small'); status.textContent = labels[task.status] || task.status; item.append(status);
+          item.onclick = () => openTask(task); $('task-list').append(item);
+        }
+      }
+    }
+    function selectSession(id) {
+      selection++; source?.close(); source = null; sessionId = id; selectedTask = null; events = [];
+      $('problem').value = ''; $('char-count').textContent = '0 / 24,000';
+      $('task-section').hidden = true; $('error').hidden = true; history.replaceState(null, '', location.pathname); renderLists();
+      $('document-form').reset(); renderDocuments();
+    }
+    function displayTask(task) {
+      selectedTask = task; sessions.get(task.session_id).set(task.id, task); $('task-section').hidden = false;
+      $('status').textContent = labels[task.status] || task.status; $('stage').textContent = task.current_stage || '—'; $('task-id').textContent = task.id;
+      $('cancel').disabled = terminal.has(task.status) || task.status === 'cancelling'; $('resume').hidden = task.status !== 'interrupted';
+      $('answer').hidden = !task.final_response && !task.error_code; $('answer').textContent = task.final_response || task.error_code || '';
+      renderLists();
+    }
+    function renderEvents() {
+      $('event-count').textContent = String(events.length); $('event-list').replaceChildren();
+      for (const event of events) {
+        const li = document.createElement('li'), stamp = document.createElement('time'), stage = document.createElement('code'), detail = document.createElement('div');
+        stamp.textContent = new Date(event.created_at).toLocaleTimeString('zh-CN', {hour12:false}); stage.textContent = event.stage_id; detail.textContent = event.event_type;
+        const payload = document.createElement('pre'); payload.textContent = JSON.stringify(event.payload, null, 2);
+        const disclosure = document.createElement('details'), summary = document.createElement('summary'); summary.textContent = '详情'; disclosure.append(summary,payload);
+        detail.append(disclosure); li.append(stamp,stage,detail); $('event-list').append(li);
+      }
+      $('raw-trace').textContent = JSON.stringify(events, null, 2);
+    }
+    async function openTask(task) {
+      const token = ++selection; source?.close(); source = null; $('error').hidden = true; events = []; renderEvents();
+      if (!sessions.has(task.session_id)) sessions.set(task.session_id, new Map()); sessionId = task.session_id;
+      try {
+        const current = await api(taskPath(task)); if (token !== selection) return; displayTask(current);
+        history.replaceState(null, '', `#session=${encodeURIComponent(sessionId)}&task=${encodeURIComponent(current.id)}`);
+        let cursor = 0;
+        do {
+          const page = await api(`${taskPath(current)}/trace?after_sequence=${cursor}&limit=500`); if (token !== selection) return;
+          events.push(...page.events); cursor = page.next_sequence;
+          if (page.events.length < 500) break;
+        } while (true);
+        renderEvents();
+        if (terminal.has(current.status)) { $('connection').textContent = '已结束'; return; }
+        $('connection').textContent = '连接中'; const connection = new EventSource(`${taskPath(current)}/events?after=${cursor}`); source = connection;
+        connection.onopen = () => { if (token === selection) $('connection').textContent = '已连接'; };
+        connection.onerror = () => { if (token === selection) $('connection').textContent = '重连中'; };
+        for (const name of names) connection.addEventListener(name, async frame => {
+          if (token !== selection) return;
+          const event = JSON.parse(frame.data); if (events.some(old => old.sequence === event.sequence)) return;
+          events.push(event); renderEvents(); $('stage').textContent = event.stage_id;
+          const taskEvent = event.event_type.startsWith('task.');
+          if (taskEvent && event.payload.status) displayTask({...selectedTask, status:event.payload.status, current_stage:event.stage_id, final_response:event.payload.final_response || selectedTask.final_response, error_code:event.payload.error_code || null});
+          if (taskEvent && terminal.has(event.payload.status)) { connection.close(); $('connection').textContent = '已结束'; }
+        });
+      } catch (error) { if (token === selection) showError(error); }
+    }
+    async function newSession() {
+      const data = await api('/v1/sessions', {method:'POST', body:'{}'}); sessions.set(data.id, new Map()); selectSession(data.id);
+    }
+    function renderDocuments() {
+      $('document-list').replaceChildren();
+      for (const document of (documents.get(sessionId) || new Map()).values()) {
+        const row = window.document.createElement('li');
+        const state = {indexing:'索引中',ready:'可检索',failed:'失败',expired:'已过期'}[document.status];
+        row.textContent = `${document.original_name} · ${state} · ${document.chunk_count} 段${document.error_code ? ' · ' + document.error_code : ''}`;
+        $('document-list').append(row);
+      }
+    }
+    $('document-form').onsubmit = async event => {
+      event.preventDefault(); $('document-upload').disabled = true; $('error').hidden = true;
+      const target = sessionId;
+      try {
+        const file = $('document-file').files[0];
+        if (!file || file.size > 20 * 1024 * 1024) throw new Error('file_too_large');
+        const form = new FormData();
+        const mediaType = file.name.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'text/markdown';
+        form.append('file', new File([file], file.name, {type:mediaType}), file.name);
+        for (const [field,id] of [['domain','document-domain'],['problem_type','document-type'],['source','document-source']]) {
+          if ($(id).value.trim()) form.append(field,$(id).value.trim());
+        }
+        const item = await api(`/v1/sessions/${encodeURIComponent(target)}/documents`, {method:'POST',body:form});
+        if (!documents.has(target)) documents.set(target,new Map());
+        documents.get(target).set(item.id,item); renderDocuments();
+      } catch(error) { if (target === sessionId) showError(error); }
+      finally { $('document-upload').disabled = false; }
+    };
+    setInterval(async () => {
+      const target = sessionId;
+      for (const item of (documents.get(target) || new Map()).values()) {
+        if (item.status !== 'indexing') continue;
+        try {
+          documents.get(target).set(item.id,await api(item.status_url));
+          if (target === sessionId) renderDocuments();
+        } catch(error) { if (target === sessionId) showError(error); }
+      }
+    }, 1500);
+    $('new-session').onclick = () => newSession().catch(showError);
+    $('problem').oninput = () => { $('char-count').textContent = `${$('problem').value.length.toLocaleString()} / 24,000`; };
+    $('problem-form').onsubmit = async event => {
+      event.preventDefault(); $('submit').disabled = true; $('error').hidden = true;
+      try {
+        if (!sessionId) await newSession();
+        const task = await api(`/v1/sessions/${encodeURIComponent(sessionId)}/tasks`, {method:'POST', headers:{'Idempotency-Key':crypto.randomUUID()}, body:JSON.stringify({problem:$('problem').value})});
+        sessions.get(task.session_id).set(task.id, task); await openTask(task);
+      } catch (error) { showError(error); } finally { $('submit').disabled = false; }
+    };
+    $('cancel').onclick = async () => { try { displayTask(await api(`${taskPath()}/cancel`, {method:'POST',body:'{}'})); } catch(error) { showError(error); } };
+    $('resume').onclick = async () => { try { await openTask(await api(`${taskPath()}/resume`, {method:'POST'})); } catch(error) { showError(error); } };
+    $('attach').onclick = () => openTask({session_id:$('attach-session').value.trim(), id:$('attach-task').value.trim()});
+    for (const id of ['events-tab','json-tab']) $(id).onclick = () => { const json = id === 'json-tab'; $('event-list').hidden = json; $('raw-trace').hidden = !json; $('events-tab').setAttribute('aria-selected',String(!json)); $('json-tab').setAttribute('aria-selected',String(json)); };
+    (async () => {
+      try {
+        const health = await api('/health/ready'); $('storage-status').textContent = `${health.runtime_mode} · ${health.storage} · restart_durable: ${health.restart_durable}`;
+        $('runtime-label').textContent = `${health.runtime_mode} · ${health.storage}`;
+        $('document-section').hidden = health.document_search !== 'ready';
+        const fragment = new URLSearchParams(location.hash.slice(1));
+        if (fragment.get('session') && fragment.get('task')) await openTask({session_id:fragment.get('session'),id:fragment.get('task')}); else await newSession();
+      } catch(error) { showError(error); }
+    })();
+  </script>
+</body>
+</html>

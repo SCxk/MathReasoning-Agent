@@ -1,0 +1,6 @@
+-r requirements-platform-m3.txt
+mcp==1.28.1
+# Keep the SDK's streaming dependency compatible with the platform FastAPI pin.
+sse-starlette==2.4.1
+starlette==0.46.2
+pydantic>=2.11,<3

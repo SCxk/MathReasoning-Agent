@@ -1,0 +1,51 @@
+groups:
+  - name: maths-slo
+    rules:
+      - alert: MathsAPIUnavailable
+        expr: up{job="maths-agent"} == 0
+        for: 30s
+        labels: {severity: critical}
+        annotations: {summary: "MathS API metrics unavailable"}
+      - alert: MathsTaskCreateSlow
+        expr: histogram_quantile(0.95, sum by (le) (rate(maths_http_request_seconds_bucket{route="/v1/sessions/{session_id}/tasks",method="POST"}[5m]))) > 0.3
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: "Task admission p95 exceeds 300 ms"}
+      - alert: MathsFirstSSESlow
+        expr: histogram_quantile(0.95, sum by (le) (rate(maths_task_first_status_seconds_bucket[5m]))) > 1
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: "Acceptance-to-first-status p95 exceeds one second"}
+      - alert: MathsSSEGap
+        expr: histogram_quantile(0.95, sum by (le) (rate(maths_sse_frame_gap_seconds_bucket[5m]))) > 15
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: "SSE frame gap exceeds 15 seconds"}
+      - alert: MathsInterruptedTasks
+        expr: maths_tasks{status="interrupted"} > 0
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: "Interrupted tasks remain unresolved for 30 seconds"}
+      - alert: MathsMissingTokenUsage
+        expr: increase(maths_token_usage_missing_total[5m]) > 0
+        labels: {severity: warning}
+        annotations: {summary: "Injected client did not report token usage"}
+      - alert: MathsDocumentDiskWarning
+        expr: maths_document_filesystem_usage_ratio >= 0.70
+        for: 1m
+        labels: {severity: warning}
+        annotations: {summary: "API document-volume filesystem usage exceeds 70 percent"}
+      - alert: MathsDocumentDiskCritical
+        expr: maths_document_filesystem_usage_ratio >= 0.85
+        for: 30s
+        labels: {severity: critical}
+        annotations: {summary: "API document-volume filesystem usage exceeds 85 percent"}
+      - alert: MathsDispatcherStalled
+        expr: maths_dispatcher_cycle_age_seconds > 30
+        for: 15s
+        labels: {severity: critical}
+        annotations: {summary: "Task discovery has not advanced for 30 seconds"}
+      - alert: MathsCleanupFailed
+        expr: increase(maths_background_failures_total{phase="cleanup"}[5m]) > 0
+        labels: {severity: warning}
+        annotations: {summary: "Retention cleanup failed; task delivery remains independent"}

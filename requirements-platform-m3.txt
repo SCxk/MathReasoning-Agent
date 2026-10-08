@@ -1,0 +1,7 @@
+-r requirements-platform.txt
+langgraph==1.2.11
+redis>=5,<7
+numpy>=1.24
+sympy>=1.12
+# Deterministic Redis transaction tests; not used by the running service.
+fakeredis>=2.25,<3

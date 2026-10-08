@@ -1,0 +1,4 @@
+-r requirements-platform-m6.txt
+ruff==0.13.3
+mypy==1.18.2
+fakeredis[lua]>=2.25,<3

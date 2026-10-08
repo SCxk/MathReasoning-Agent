@@ -1,0 +1,20 @@
+# Offline weights and a trusted injected-client integration are operator-owned.
+x-rag: &rag
+  build:
+    context: .
+    target: rag
+  environment:
+    MATHS_RAG_ENABLED: "true"
+    MATHS_EMBEDDING_MODEL_DIR: /models/embedding
+    PYTHONPATH: /app:/integration
+  volumes:
+    - ${MATHS_EMBEDDING_MODEL_DIR:?Set a local frozen model directory}:/models/embedding:ro
+    - ${MATHS_INTEGRATION_DIR:?Set a trusted provider directory}:/integration:ro
+
+services:
+  api:
+    <<: *rag
+  worker:
+    <<: *rag
+  recovery-worker:
+    <<: *rag

@@ -1,0 +1,64 @@
+name: MathReasoning-Agent Web
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify-delivery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:16.9-bookworm
+        env:
+          POSTGRES_USER: maths
+          POSTGRES_PASSWORD: ci-disposable-only
+          POSTGRES_DB: maths
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U maths -d maths"
+          --health-interval 2s --health-timeout 2s --health-retries 30
+    env:
+      MATHS_TEST_DATABASE_URL: postgresql+psycopg://maths:ci-disposable-only@127.0.0.1:5432/maths
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: requirements-platform*.txt
+      - uses: docker/setup-buildx-action@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.1'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+      - name: Chat UI types, tests and build
+        working-directory: client
+        run: |
+          npm ci
+          npm test
+          npm run build
+      - name: Install deterministic test dependencies
+        run: pip install -r requirements-platform-dev.txt
+      - name: Lint, types, tests and branch gates
+        run: python scripts/check_platform_ci.py
+      - name: Cached runtime image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          load: true
+          tags: maths-agent:local
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Compose health, HTTP, recovery and load smoke
+        env:
+          MATHS_DB_PASSWORD: ci-disposable-only
+        run: |
+          timeout 120 docker compose up --no-build --wait --wait-timeout 80
+          python scripts/smoke_platform_m6.py --url http://127.0.0.1:8004 --compose
+      - name: Cleanup
+        if: always()
+        env:
+          MATHS_DB_PASSWORD: ci-disposable-only
+        run: docker compose down

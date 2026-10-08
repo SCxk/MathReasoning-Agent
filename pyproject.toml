@@ -1,0 +1,16 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+follow_imports = "silent"
+check_untyped_defs = true
+files = ["agent_platform/questions_parser.py", "agent_platform/question_batches.py", "agent_platform/models.py", "agent_platform/runtime.py", "agent_platform/tools/schemas.py", "agent_platform/database.py", "agent_platform/postgres_store.py", "agent_platform/postgres_documents.py", "agent_platform/event_transport.py", "agent_platform/distributed.py", "agent_platform/metrics.py", "agent_platform/operations.py", "agent_platform/queue_service.py", "agent_platform/deployment.py", "agent_platform/celery_worker.py"]

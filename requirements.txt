@@ -1,0 +1,4 @@
+# Default Web backend, including local chat and distributed storage adapters.
+-r requirements-platform-m6.txt
+# Optional local embedding/RAG: requirements-platform-m5.txt
+# Development and CI: requirements-platform-dev.txt
